@@ -12,6 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import ServerErrorPage from "./Error/ServerErrorPage";
 
 function HomePage() {
   const dispatch = useDispatch<AppDispatch>();
@@ -32,7 +33,7 @@ function HomePage() {
       {getAllFormsStatus === "loading" ? (
         <p>Loading</p>
       ) : getAllFormsStatus === "failed" ? (
-        <p>Error</p>
+        <ServerErrorPage />
       ) : getAllFormsStatus === "succeeded" ? (
         <>
           {forms.length === 0 ? (

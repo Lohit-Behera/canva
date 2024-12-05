@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import ServerErrorPage from "./Error/ServerErrorPage";
 
 function FormPage() {
   const { formId } = useParams();
@@ -50,7 +51,7 @@ function FormPage() {
       {getFormStatus === "loading" ? (
         <p>Loading...</p>
       ) : getFormStatus === "failed" ? (
-        <p>Error</p>
+        <ServerErrorPage />
       ) : getFormStatus === "succeeded" ? (
         <Card className="w-[98%] md:w-[90%]">
           <CardHeader>

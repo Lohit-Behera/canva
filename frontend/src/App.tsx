@@ -15,6 +15,8 @@ import LoginPage from "@/pages/LoginPage";
 import CreatePage from "./pages/CreatePage";
 import FormPage from "./pages/FormPage";
 import ProtectedRoute from "./components/ProtectedRoute";
+import PageNotFound from "./pages/Error/PageNotFound";
+import ContactPage from "./pages/ContactPage";
 
 const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
@@ -37,8 +39,10 @@ const GoogleAuthWrapperSignIn = () => {
 const router = createBrowserRouter(
   createRoutesFromElements(
     <Route path="/" element={<Layout />}>
+      <Route path="*" element={<PageNotFound />} />
       <Route path="/signup" element={<GoogleAuthWrapperSignUp />} />
       <Route path="/login" element={<GoogleAuthWrapperSignIn />} />
+      <Route path="/contact" element={<ContactPage />} />
       {/* Protected routes */}
       <Route
         index
