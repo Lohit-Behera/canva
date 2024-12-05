@@ -48,7 +48,7 @@ function LoginPage() {
 
   useEffect(() => {
     if (userInfo) {
-      if (!userDetails?.name) {
+      if (!userDetails?.name || userDetails?._id !== userInfo._id) {
         dispatch(fetchUserDetails());
         navigate("/");
       }

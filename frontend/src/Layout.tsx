@@ -8,6 +8,7 @@ import Header from "./components/Header";
 import SomethingWentWrong from "./pages/Error/SomethingWentWrong";
 import ServerErrorPage from "./pages/Error/ServerErrorPage";
 import { toast } from "sonner";
+import GlobalLoader from "./components/loader/GlobalLoader/GlobalLoader";
 
 function Layout() {
   const dispatch = useDispatch<AppDispatch>();
@@ -35,7 +36,7 @@ function Layout() {
   return (
     <div className="w-full min-h-[100vh] flex flex-col justify-center items-center">
       {userDetailsStatus === "loading" ? (
-        <p>Loading...</p>
+        <GlobalLoader />
       ) : userDetailsStatus === "failed" ? (
         <ServerErrorPage />
       ) : userDetailsStatus === "succeeded" || userDetailsStatus === "idle" ? (

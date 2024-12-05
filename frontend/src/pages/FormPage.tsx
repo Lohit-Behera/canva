@@ -7,7 +7,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -18,6 +17,7 @@ import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import ServerErrorPage from "./Error/ServerErrorPage";
+import FormPageLoader from "@/components/loader/FormPageLoader";
 
 function FormPage() {
   const { formId } = useParams();
@@ -28,7 +28,6 @@ function FormPage() {
   const getFormStatus = useSelector(
     (state: RootState) => state.form.getFormStatus
   );
-
   useEffect(() => {
     dispatch(fetchGetForm(formId as string));
   }, []);
@@ -49,7 +48,7 @@ function FormPage() {
   return (
     <>
       {getFormStatus === "loading" ? (
-        <p>Loading...</p>
+        <FormPageLoader />
       ) : getFormStatus === "failed" ? (
         <ServerErrorPage />
       ) : getFormStatus === "succeeded" ? (
@@ -93,9 +92,6 @@ function FormPage() {
               <img src={getForm?.thumbnail} alt="" />
             </div>
           </CardContent>
-          <CardFooter>
-            <p>Card Footer</p>
-          </CardFooter>
         </Card>
       ) : null}
     </>
