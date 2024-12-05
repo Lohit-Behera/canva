@@ -23,7 +23,11 @@ import {
 } from "@/components/ui/form";
 import PasswordInput from "@/components/PasswordInput";
 import { toast } from "sonner";
-import { fetchGoogleAuth, fetchRegister } from "@/features/UserSlice";
+import {
+  fetchGoogleAuth,
+  fetchRegister,
+  fetchUserDetails,
+} from "@/features/UserSlice";
 import { useEffect } from "react";
 import { useGoogleLogin } from "@react-oauth/google";
 
@@ -75,9 +79,16 @@ function SignUpPage() {
   const navigate = useNavigate();
 
   const userInfo = useSelector((state: RootState) => state.user.userInfo);
+  const userDetails = useSelector(
+    (state: RootState) => state.user.userDetails.data
+  );
 
   useEffect(() => {
     if (userInfo) {
+      if (!userDetails?.name) {
+        dispatch(fetchUserDetails());
+        navigate("/");
+      }
       navigate("/");
     }
   }, [userInfo, navigate]);
@@ -117,6 +128,7 @@ function SignUpPage() {
         loading: "Creating user...",
         success: (data: any) => {
           form.reset();
+          navigate("/");
           return data.message || "User created successfully.";
         },
         error: (error) => {

@@ -98,10 +98,18 @@ const getForm = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, form[0], "Form found successfully."));
 });
 
-// get all forms
+// get all forms of user
 const getAllForms = asyncHandler(async (req, res) => {
+  // get user form req
+  const user = await User.findById(req.user?._id);
+  if (!user) {
+    return res.status(404).json(new ApiResponse(404, null, "User not found."));
+  }
   // get all forms
   const forms = await Form.aggregate([
+    {
+      $match: { user: user._id },
+    },
     {
       $lookup: {
         from: "users",
@@ -147,9 +155,6 @@ const deleteForm = asyncHandler(async (req, res) => {
   if (!form) {
     return res.status(404).json(new ApiResponse(404, null, "Form not found."));
   }
-  console.log(form.user.toString());
-  console.log(req.user?._id);
-  console.log(form.user.toString() !== req.user?._id.toString());
 
   // check if form belongs to user
   if (form.user.toString() !== req.user?._id.toString()) {

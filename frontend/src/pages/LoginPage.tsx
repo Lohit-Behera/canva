@@ -24,7 +24,11 @@ import {
 } from "@/components/ui/form";
 import PasswordInput from "@/components/PasswordInput";
 import { toast } from "sonner";
-import { fetchGoogleAuth, fetchLogin } from "@/features/UserSlice";
+import {
+  fetchGoogleAuth,
+  fetchLogin,
+  fetchUserDetails,
+} from "@/features/UserSlice";
 import { useEffect } from "react";
 
 const loginFormSchema = z.object({
@@ -38,9 +42,16 @@ function LoginPage() {
   const navigate = useNavigate();
 
   const userInfo = useSelector((state: RootState) => state.user.userInfo);
+  const userDetails = useSelector(
+    (state: RootState) => state.user.userDetails.data
+  );
 
   useEffect(() => {
     if (userInfo) {
+      if (!userDetails?.name) {
+        dispatch(fetchUserDetails());
+        navigate("/");
+      }
       navigate("/");
     }
   }, [userInfo, navigate]);
@@ -59,7 +70,6 @@ function LoginPage() {
       loading: "Logging in...",
       success: (data: any) => {
         form.reset();
-        navigate("/");
         return data.message || "Login successful";
       },
       error: (error) => {
@@ -69,7 +79,24 @@ function LoginPage() {
   }
   const responseGoogle = (authResponse: any) => {
     try {
-      dispatch(fetchGoogleAuth(authResponse.code));
+      if (authResponse.code === undefined) {
+        toast.error("Failed to Sign Up with Google. Please try again later.");
+        return;
+      }
+      const googlePromise = dispatch(
+        fetchGoogleAuth(authResponse.code)
+      ).unwrap();
+      toast.promise(googlePromise, {
+        loading: "Logging in...",
+        success: (data: any) => {
+          form.reset();
+          navigate("/");
+          return data.message || "Login successful";
+        },
+        error: (error) => {
+          return error || error.message || "Error logging in.";
+        },
+      });
     } catch (error) {
       toast.error("Failed to Sign Up with Google. Please try again later.");
     }
