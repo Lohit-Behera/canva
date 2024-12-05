@@ -14,6 +14,6 @@ router.post(
   createForm
 );
 
-router.get("/get/:id", authMiddleware, getForm);
+router.get("/get/:formId", authMiddleware, getForm);
 
 export default router;

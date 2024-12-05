@@ -12,6 +12,7 @@ import HomePage from "@/pages/HomePage";
 import SignUpPage from "@/pages/SignUpPage";
 import LoginPage from "@/pages/LoginPage";
 import CreatePage from "./pages/CreatePage";
+import FormPage from "./pages/FormPage";
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -20,6 +21,7 @@ const router = createBrowserRouter(
       <Route path="/signup" element={<SignUpPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/create" element={<CreatePage />} />
+      <Route path="/form/:formId" element={<FormPage />} />
     </Route>
   )
 );

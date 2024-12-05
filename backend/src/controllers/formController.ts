@@ -3,6 +3,7 @@ import { ApiResponse } from "../utils/ApiResponse";
 import { Form } from "../models/formModel";
 import { User } from "../models/userModel";
 import { uploadFile } from "../utils/cloudinary";
+import mongoose from "mongoose";
 
 const createForm = asyncHandler(async (req, res) => {
   // get user form req
@@ -50,14 +51,51 @@ const createForm = asyncHandler(async (req, res) => {
     .json(new ApiResponse(201, createdForm._id, "Form created successfully."));
 });
 
+// get form
 const getForm = asyncHandler(async (req, res) => {
-  const form = await Form.findById(req.params.id);
+  // get form id from req.params
+  const formId = req.params.formId;
+  // aggregate form to get user data
+  const form = await Form.aggregate([
+    {
+      $match: {
+        _id: new mongoose.Types.ObjectId(formId),
+      },
+    },
+    {
+      $lookup: {
+        from: "users",
+        localField: "user",
+        foreignField: "_id",
+        as: "userData",
+      },
+    },
+    {
+      $unwind: {
+        path: "$userData",
+      },
+    },
+    {
+      $project: {
+        _id: 1,
+        firstName: 1,
+        lastName: 1,
+        thumbnail: 1,
+        user: 1,
+        userName: "$userData.name",
+        userEmail: "$userData.email",
+        userAvatar: "$userData.avatar",
+      },
+    },
+  ]);
+  // validate form
   if (!form) {
     return res.status(404).json(new ApiResponse(404, null, "Form not found."));
   }
+  // send response
   return res
     .status(200)
-    .json(new ApiResponse(200, form, "Form found successfully."));
+    .json(new ApiResponse(200, form[0], "Form found successfully."));
 });
 
 export { createForm, getForm };

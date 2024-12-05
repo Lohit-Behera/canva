@@ -2,6 +2,19 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 import { baseUrl } from "@/lib/proxy";
 
+type From = {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  thumbnail: string;
+  user: string;
+  userName: string;
+  userEmail: string;
+  userAvatar: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export const fetchCreateForm = createAsyncThunk(
   "form/create",
   async (
@@ -61,7 +74,7 @@ const formSlice = createSlice({
   initialState: {
     createForm: null,
 
-    getForm: null,
+    getForm: { data: {} as From },
     getFormStatus: "idle",
     getFormError: {},
   },
