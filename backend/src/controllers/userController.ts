@@ -3,6 +3,8 @@ import { ApiResponse } from "../utils/ApiResponse";
 import { User } from "../models/userModel";
 import { Response } from "express";
 import { uploadFile } from "../utils/cloudinary";
+import { oAuth2Client } from "../utils/googleConfig";
+import axios from "axios";
 
 function validateEmail(email: string): boolean {
   const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -169,7 +171,9 @@ const userLogin = asyncHandler(async (req, res) => {
   }
   const { accessToken, refreshToken } = tokens;
 
-  const updatedUser = await User.findOne({ _id: user._id });
+  const updatedUser = await User.findOne({ _id: user._id }).select(
+    "-password -avatar -createdAt -updatedAt -__v"
+  );
 
   // send response
   return res
@@ -222,4 +226,135 @@ const userDetails = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, user, "User found successfully."));
 });
 
-export { userRegister, userLogin, userLogout, userDetails };
+// google auth
+const googleAuth = asyncHandler(async (req, res) => {
+  try {
+    const { token } = req.body;
+
+    if (!token || token === "undefined" || typeof token !== "string") {
+      return res
+        .status(400)
+        .json(
+          new ApiResponse(400, {}, "Token is required and must be a string")
+        );
+    }
+
+    const googleRes = await oAuth2Client.getToken(token);
+    oAuth2Client.setCredentials(googleRes.tokens);
+
+    if (!googleRes.tokens.access_token) {
+      return res
+        .status(500)
+        .json(
+          new ApiResponse(
+            500,
+            {},
+            "Something went wrong while generating access token"
+          )
+        );
+    }
+
+    const userRes = await axios.get(
+      `https://www.googleapis.com/oauth2/v3/userinfo?alt=json&access_token=${googleRes.tokens.access_token}`
+    );
+
+    if (!userRes.data) {
+      return res
+        .status(500)
+        .json(
+          new ApiResponse(
+            500,
+            {},
+            "Something went wrong while fetching user details"
+          )
+        );
+    }
+
+    const { email, name, picture } = userRes.data;
+
+    if (!email || !name || !picture) {
+      return res
+        .status(404)
+        .json(new ApiResponse(404, {}, "Email, name, picture are not found"));
+    }
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      const user = await User.create({
+        email,
+        name,
+        password: Math.random().toString(36).slice(-8),
+        avatar: picture,
+      });
+      // generate tokens
+      const tokens = await generateTokens(user._id, res);
+      if (!tokens) {
+        return; // Exit if tokens generation failed
+      }
+      const { accessToken, refreshToken } = tokens;
+
+      const loggedInUser = await User.findById(user._id).select(
+        "-password -avatar -createdAt -updatedAt -__v"
+      );
+
+      // send response
+      return res
+        .status(200)
+        .cookie("accessToken", accessToken, {
+          httpOnly: true,
+          secure: true,
+          sameSite: "none",
+          maxAge: 24 * 60 * 60 * 1000,
+        })
+        .cookie("refreshToken", refreshToken, {
+          httpOnly: true,
+          secure: true,
+          sameSite: "none",
+          maxAge: 60 * 24 * 60 * 60 * 1000,
+        })
+        .json(
+          new ApiResponse(200, loggedInUser, "Sign up successful with google")
+        );
+    } else {
+      // change avatar
+      user.avatar = picture;
+      await user.save({ validateBeforeSave: false });
+      // generate tokens
+      const tokens = await generateTokens(user._id, res);
+      if (!tokens) {
+        return; // Exit if tokens generation failed
+      }
+      const { accessToken, refreshToken } = tokens;
+      const loggedInUser = await User.findById(user._id).select(
+        "-password -avatar -createdAt -updatedAt -__v"
+      );
+
+      // send response
+      return res
+        .status(200)
+        .cookie("accessToken", accessToken, {
+          httpOnly: true,
+          secure: true,
+          sameSite: "none",
+          maxAge: 24 * 60 * 60 * 1000,
+        })
+        .cookie("refreshToken", refreshToken, {
+          httpOnly: true,
+          secure: true,
+          sameSite: "none",
+          maxAge: 60 * 24 * 60 * 60 * 1000,
+        })
+        .json(
+          new ApiResponse(200, loggedInUser, "Sign in successful with google")
+        );
+    }
+  } catch (error) {
+    console.log(error);
+    return res
+      .status(500)
+      .json(new ApiResponse(500, {}, "Something went wrong"));
+  }
+});
+
+export { userRegister, userLogin, userLogout, userDetails, googleAuth };

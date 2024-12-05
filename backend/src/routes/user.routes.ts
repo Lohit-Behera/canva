@@ -7,6 +7,7 @@ import {
   userLogin,
   userLogout,
   userDetails,
+  googleAuth,
 } from "../controllers/userController";
 
 const router = Router();
@@ -14,6 +15,7 @@ const router = Router();
 // Public routes
 router.post("/register", upload.single("avatar"), resizeImage, userRegister);
 router.post("/login", userLogin);
+router.post("/auth/google", googleAuth);
 
 // Protected routes
 router.get("/logout", authMiddleware, userLogout);

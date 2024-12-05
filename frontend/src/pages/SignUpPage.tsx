@@ -23,8 +23,9 @@ import {
 } from "@/components/ui/form";
 import PasswordInput from "@/components/PasswordInput";
 import { toast } from "sonner";
-import { fetchRegister } from "@/features/UserSlice";
+import { fetchGoogleAuth, fetchRegister } from "@/features/UserSlice";
 import { useEffect } from "react";
+import { useGoogleLogin } from "@react-oauth/google";
 
 const signUpFormSchema = z
   .object({
@@ -105,6 +106,33 @@ function SignUpPage() {
       },
     });
   }
+  const responseGoogle = (authResponse: any) => {
+    try {
+      if (authResponse.code === undefined) {
+        toast.error("Failed to Sign Up with Google. Please try again later.");
+        return;
+      }
+      const googlePromise = dispatch(fetchGoogleAuth(authResponse.code));
+      toast.promise(googlePromise, {
+        loading: "Creating user...",
+        success: (data: any) => {
+          form.reset();
+          return data.message || "User created successfully.";
+        },
+        error: (error) => {
+          return error || error.message || "Error creating user.";
+        },
+      });
+    } catch (error) {
+      toast.error("Failed to Sign Up with Google. Please try again later.");
+    }
+  };
+
+  const googleLogin = useGoogleLogin({
+    onSuccess: responseGoogle,
+    onError: responseGoogle,
+    flow: "auth-code",
+  });
   return (
     <Card className="mx-auto max-w-[350px] min-w-[350px]">
       <CardHeader>
@@ -113,7 +141,7 @@ function SignUpPage() {
           Enter your credentials to create an account.
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="grid gap-4">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField
@@ -193,6 +221,14 @@ function SignUpPage() {
             </Button>
           </form>
         </Form>
+        <Button
+          variant="outline"
+          className="w-full"
+          size="sm"
+          onClick={googleLogin}
+        >
+          Sign Up with Google
+        </Button>
         <div className="mt-4 text-center text-sm">
           Already have an account?{" "}
           <Link to="/login" className="underline">

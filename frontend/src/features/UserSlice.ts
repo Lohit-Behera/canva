@@ -135,6 +135,37 @@ export const fetchUserDetails = createAsyncThunk(
   }
 );
 
+export const fetchGoogleAuth = createAsyncThunk(
+  "user/googleAuth",
+  async (token: string, { rejectWithValue }) => {
+    try {
+      const config = {
+        headers: {
+          "Content-Type": "application/json",
+        },
+        withCredentials: true,
+      };
+      const { data } = await axios.post(
+        `${baseUrl}/api/v1/users/auth/google`,
+        { token },
+        config
+      );
+      if (data.data) {
+        document.cookie = `userInfoCanva=${encodeURIComponent(
+          JSON.stringify(data.data)
+        )}; path=/; max-age=${30 * 24 * 60 * 60}; secure;`;
+      }
+      return data.data;
+    } catch (error: any) {
+      const errorMessage =
+        error.response && error.response.data
+          ? error.response.data.message
+          : error.message;
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
 const userInfoCookie = getCookie("userInfoCanva");
 
 const userSlice = createSlice({
@@ -159,6 +190,10 @@ const userSlice = createSlice({
     makeAdmin: {},
     makeAdminStatus: "idle",
     makeAdminError: {},
+
+    googleAuth: {},
+    googleAuthStatus: "idle",
+    googleAuthError: {},
   },
   reducers: {
     resetUserDetails: (state) => {
@@ -212,6 +247,20 @@ const userSlice = createSlice({
       .addCase(fetchUserDetails.rejected, (state, action) => {
         state.userDetailsStatus = "failed";
         state.userDetailsError = action.payload || "User Details failed";
+      })
+
+      // google auth
+      .addCase(fetchGoogleAuth.pending, (state) => {
+        state.googleAuthStatus = "loading";
+      })
+      .addCase(fetchGoogleAuth.fulfilled, (state, action) => {
+        state.googleAuthStatus = "succeeded";
+        state.userInfo = action.payload;
+        state.googleAuth = action.payload;
+      })
+      .addCase(fetchGoogleAuth.rejected, (state, action) => {
+        state.googleAuthStatus = "failed";
+        state.googleAuthError = action.payload || "Google auth failed";
       });
   },
 });

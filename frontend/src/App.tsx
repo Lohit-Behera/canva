@@ -6,6 +6,7 @@ import {
   createRoutesFromElements,
 } from "react-router-dom";
 import { Toaster } from "@/components/ui/sonner";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 
 import Layout from "./Layout";
 import HomePage from "@/pages/HomePage";
@@ -14,12 +15,30 @@ import LoginPage from "@/pages/LoginPage";
 import CreatePage from "./pages/CreatePage";
 import FormPage from "./pages/FormPage";
 
+const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+
+const GoogleAuthWrapperSignUp = () => {
+  return (
+    <GoogleOAuthProvider clientId={clientId}>
+      <SignUpPage />
+    </GoogleOAuthProvider>
+  );
+};
+
+const GoogleAuthWrapperSignIn = () => {
+  return (
+    <GoogleOAuthProvider clientId={clientId}>
+      <LoginPage />
+    </GoogleOAuthProvider>
+  );
+};
+
 const router = createBrowserRouter(
   createRoutesFromElements(
     <Route path="/" element={<Layout />}>
       <Route index element={<HomePage />} />
-      <Route path="/signup" element={<SignUpPage />} />
-      <Route path="/login" element={<LoginPage />} />
+      <Route path="/signup" element={<GoogleAuthWrapperSignUp />} />
+      <Route path="/login" element={<GoogleAuthWrapperSignIn />} />
       <Route path="/create" element={<CreatePage />} />
       <Route path="/form/:formId" element={<FormPage />} />
     </Route>

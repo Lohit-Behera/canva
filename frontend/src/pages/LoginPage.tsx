@@ -4,6 +4,7 @@ import { AppDispatch, RootState } from "@/store/store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { useGoogleLogin } from "@react-oauth/google";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -23,7 +24,7 @@ import {
 } from "@/components/ui/form";
 import PasswordInput from "@/components/PasswordInput";
 import { toast } from "sonner";
-import { fetchLogin } from "@/features/UserSlice";
+import { fetchGoogleAuth, fetchLogin } from "@/features/UserSlice";
 import { useEffect } from "react";
 
 const loginFormSchema = z.object({
@@ -66,6 +67,19 @@ function LoginPage() {
       },
     });
   }
+  const responseGoogle = (authResponse: any) => {
+    try {
+      dispatch(fetchGoogleAuth(authResponse.code));
+    } catch (error) {
+      toast.error("Failed to Sign Up with Google. Please try again later.");
+    }
+  };
+
+  const googleLogin = useGoogleLogin({
+    onSuccess: responseGoogle,
+    onError: responseGoogle,
+    flow: "auth-code",
+  });
   return (
     <Card className="mx-auto max-w-sm">
       <CardHeader>
@@ -74,7 +88,7 @@ function LoginPage() {
           Enter your email below to login to your account
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="grid gap-4">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField
@@ -108,6 +122,14 @@ function LoginPage() {
             </Button>
           </form>
         </Form>
+        <Button
+          variant="outline"
+          className="w-full"
+          size="sm"
+          onClick={googleLogin}
+        >
+          Login with Google
+        </Button>
         <div className="mt-4 text-center text-sm">
           Don&apos;t have an account?{" "}
           <Link to="/signup" className="underline">
