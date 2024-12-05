@@ -17,7 +17,9 @@ app.use(cookieParser());
 
 // import routes
 import userRoutes from "./routes/user.routes";
+import formRoutes from "./routes/form.routes";
 
 app.use("/api/v1/users", userRoutes);
+app.use("/api/v1/forms", formRoutes);
 
 export { app };
