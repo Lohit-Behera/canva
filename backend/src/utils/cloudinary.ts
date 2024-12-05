@@ -1,5 +1,7 @@
 import { v2 as cloudinary } from "cloudinary";
 import fs from "fs";
+import { Response } from "express";
+import { ApiResponse } from "./ApiResponse";
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME || "",
@@ -50,4 +52,29 @@ const uploadFile = async (file: File): Promise<string | null> => {
   }
 };
 
-export { uploadFile };
+const deleteFile = async (
+  filePath: string | undefined,
+  res: Response
+): Promise<any> => {
+  try {
+    if (!filePath) {
+      return res
+        .status(500)
+        .json(new ApiResponse(500, {}, "File path not provided"));
+    }
+    const response = await cloudinary.uploader.destroy(filePath);
+    return response;
+  } catch (error: any) {
+    return res
+      .status(500)
+      .json(
+        new ApiResponse(
+          500,
+          error.message,
+          "Something went wrong while deleting file"
+        )
+      );
+  }
+};
+
+export { uploadFile, deleteFile };

@@ -2,7 +2,7 @@ import { asyncHandler } from "../utils/asyncHandler";
 import { ApiResponse } from "../utils/ApiResponse";
 import { Form } from "../models/formModel";
 import { User } from "../models/userModel";
-import { uploadFile } from "../utils/cloudinary";
+import { uploadFile, deleteFile } from "../utils/cloudinary";
 import mongoose from "mongoose";
 
 const createForm = asyncHandler(async (req, res) => {
@@ -98,4 +98,83 @@ const getForm = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, form[0], "Form found successfully."));
 });
 
-export { createForm, getForm };
+// get all forms
+const getAllForms = asyncHandler(async (req, res) => {
+  // get all forms
+  const forms = await Form.aggregate([
+    {
+      $lookup: {
+        from: "users",
+        localField: "user",
+        foreignField: "_id",
+        as: "userData",
+      },
+    },
+    {
+      $unwind: {
+        path: "$userData",
+      },
+    },
+    {
+      $project: {
+        _id: 1,
+        firstName: 1,
+        lastName: 1,
+        thumbnail: 1,
+        user: 1,
+        userName: "$userData.name",
+        userEmail: "$userData.email",
+        userAvatar: "$userData.avatar",
+      },
+    },
+  ]);
+  // validate forms
+  if (!forms) {
+    return res.status(404).json(new ApiResponse(404, null, "Forms not found."));
+  }
+  // send response
+  return res
+    .status(200)
+    .json(new ApiResponse(200, forms, "Forms found successfully."));
+});
+
+// delete form
+const deleteForm = asyncHandler(async (req, res) => {
+  // get form id from req.params
+  const formId = req.params.formId;
+  // get form
+  const form = await Form.findById(formId);
+  if (!form) {
+    return res.status(404).json(new ApiResponse(404, null, "Form not found."));
+  }
+  console.log(form.user.toString());
+  console.log(req.user?._id);
+  console.log(form.user.toString() !== req.user?._id.toString());
+
+  // check if form belongs to user
+  if (form.user.toString() !== req.user?._id.toString()) {
+    return res
+      .status(403)
+      .json(
+        new ApiResponse(
+          403,
+          null,
+          "You are not authorized to delete this form."
+        )
+      );
+  }
+
+  // delete thumbnail from cloudinary
+  const publicId = form.thumbnail?.split("/")?.pop()?.split(".")[0] ?? null;
+  if (publicId) {
+    await deleteFile(publicId, res);
+  }
+  // delete form
+  await Form.findByIdAndDelete(formId);
+  // send response
+  return res
+    .status(200)
+    .json(new ApiResponse(200, null, "Form deleted successfully."));
+});
+
+export { createForm, getForm, getAllForms, deleteForm };
