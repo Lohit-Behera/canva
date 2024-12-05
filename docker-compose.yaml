@@ -1,0 +1,46 @@
+version: '3'
+
+services:
+  database:
+    image: mongo
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - app-network
+    
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/backend
+      - /backend/node_modules
+    networks:
+      - app-network
+    depends_on:
+      - database
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/frontend
+      - /frontend/node_modules
+    networks:
+      - app-network
+    depends_on:
+      - backend
+
+volumes:
+  mongo-data:
+
+networks:
+  app-network:
+    driver: bridge
